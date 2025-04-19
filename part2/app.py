@@ -12,7 +12,10 @@ application_collection = db['applications']
 
 @app.route('/api/allApplications', methods=['GET'])
 def get_all_applications_v2():
-    return jsonify(applications)
+    apps = list(application_collection.find())
+    for app in apps:
+        app['_id'] = str(app['_id'])
+    return jsonify(apps)
 
 
 # API to add an application to the database
@@ -20,18 +23,30 @@ def get_all_applications_v2():
 def add_application():
     print("adding application")
     data = request.get_json()
-    appNumber = int(data.get('appNumber'))
+    count = application_collection.count_documents({})
+    appNumber = 1000 + count
     appStatus = data.get('appStatus')
     appName = data.get('appName')
+    appAddress = data.get('appAddress')
     appZip = data.get('appZip')
     
     applications.append({
         'appNumber': appNumber,
         'appStatus': appStatus,
         'appName': appName,
+        'appAddress': appAddress,
         'appZip': appZip
     })
 
+    applicant = {
+        'appNumber': appNumber,
+        'appStatus': appStatus,
+        'appName': appName,
+        'appAddress': appAddress,
+        'appZip': appZip
+    }
+
+    application_collection.insert_one(applicant)
     return jsonify({'message': 'Application added successfully'})
 
 @app.route('/api/check_appStatus/<appNumber>', methods=['GET'])

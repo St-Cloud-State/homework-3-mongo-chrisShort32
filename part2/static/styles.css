@@ -1,0 +1,10 @@
+body {
+    background-color: #f9f9f9;
+  }
+  
+
+label, input, select {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
