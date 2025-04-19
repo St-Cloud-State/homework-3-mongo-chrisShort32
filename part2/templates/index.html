@@ -1,0 +1,66 @@
+<html>
+
+<head>
+    <title>Acme Financial Corp.</title>
+
+</head>
+
+<body>
+    <h1>Acme Financial Corp.</h1>
+	
+	<!-- New Applicant Form -->
+    <div id="newApp">
+        <h2>New Applicants</h2>
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="zipcode" placeholder="Zipcode">
+        <button onclick="submit()">Submit</button>
+    </div>
+
+    <!--Display applications that have been submitted-->
+    <div id="applicationList" style="margin-top: 10px;">
+        <!-- Application data will be displayed dynamically here -->
+    </div>
+
+    <!--Check Application Status-->
+    <div id="checkStatus">
+        <h2>Check Status</h2>
+        <input type="text" id="appNumberCheck" placeholder="Application Number">
+        <button id="checkStatusButton" onclick="checkStatus()">Submit</button>	
+    </div>
+
+    <!-- Display application status in this div -->
+    <div id="applicationStatus" style="margin-top: 10px;">
+    <!-- Application data will be displayed here dynamically -->
+    </div>
+    
+    <!-- Change Application Status -->
+    <div id="changeStatus">
+        <h2>Change Status</h2>
+        <input type="text" id="appNumberChange" placeholder="Application Number">
+        <select id="statusOptions" name="statusOptions">
+            <option value="Not Found">Not Found</option>
+            <option value="Received">Received</option>
+            <option value="Processing">Processing</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Rejected">Rejected</option>
+        </select>
+        <button onclick="changeAppStatus()">Submit</button>
+    </div>
+
+    <!-- Display application change status in this div -->
+    <div id="changeMessage" style="margin-top: 10px;">
+        <!-- Application status data will be displayed here dynamically -->
+    </div>
+
+    <!--Display applications in this div-->
+    <div id="allApplications">
+        <button onclick="showAllApplications()" style="margin-top: 20px;">Show All</button>
+        <div id="displayApps" style="margin-top: 10px;"></div>
+            <!--Application data will be displayed here dynamically-->
+   </div>
+
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
