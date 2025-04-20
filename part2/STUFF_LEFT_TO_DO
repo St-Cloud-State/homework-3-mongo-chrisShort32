@@ -1,0 +1,10 @@
+Implement Phase 3 processing -- Certification Check -- how much money you can get?
+Handle Accepted or Rejected
+    Notes for each
+        Accepted -- Loan terms
+        Rejected -- Why you got Rejected
+    
+    Prints in check status if status is accepted or rejected??
+    Or separate spot for that stuff?
+
+Implement Application Search (look up) -- displays all notes related to the application

@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request
 import os
 import pymongo
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 applications = [];
@@ -49,15 +50,122 @@ def add_application():
     application_collection.insert_one(applicant)
     return jsonify({'message': 'Application added successfully'})
 
+@app.route('/api/update_personal_details', methods=['POST'])
+def update_personal():
+    data = request.get_json()
+    app_number = int(data.get('appNumber'))
+    age = data.get('age')
+    employment_status = data.get('employmentStatus')
+    marital_status = data.get('maritalStatus')
+
+    missing_fields = []
+    if not age:
+        missing_fields.append("age")
+    if not employment_status:
+        missing_fields.append("employment status")
+    if not marital_status:
+        missing_fields.append("marital status")
+
+    status = "Incomplete" if missing_fields else "Complete"
+
+    update_fields = {
+        "appStatus": "Processing",
+        "processing_phase_one": {
+            "personal_details": {
+                "age": age,
+                "employment_status": employment_status,
+                "marital_status": marital_status
+                },
+
+            "status": status,
+            "status_update_time": datetime.now(timezone.utc).isoformat()
+        }
+    }
+
+    application_collection.update_one(
+        {"appNumber": app_number},
+        {"$set": update_fields}
+    )
+
+    # add a note detailing why the phase is incomplete
+    if status == "Incomplete":
+        note = {
+            "message": f"Phase 1 incomplete: Missing {', '.join(missing_fields)}",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        application_collection.update_one(
+            {"appNumber": app_number},
+            {"$push": {"notes": note}}
+        )
+
+    return jsonify({"message": f"Personal details for #{app_number} updated succesfully"})
+
+
+@app.route('/api/credit_check', methods=['POST'])
+def credit_check():
+    data = request.get_json()
+    app_number = int(data.get('appNumber'))
+    credit_score = data.get('creditScore')
+    current_debt = int(data.get('currentDebt') or 0)
+    annual_income = int(data.get('annualIncome') or 0)
+
+    missing_fields = []
+    if not credit_score:
+        missing_fields.append("credit score")
+    if not current_debt:
+        missing_fields.append("current debt")
+    if not annual_income:
+        missing_fields.append("annual income")
+
+    status = "Incomplete" if missing_fields else "Complete"
+
+    if annual_income > 0:
+        debt_to_income = round(current_debt/annual_income * 100, 2)
+    else:
+        debt_to_income = None
+        
+    update_fields = {
+        "appStatus": "Processing",
+        "processing_phase_two": {
+            "credit_check": {
+                "credit_score": credit_score,
+                "current_debt": current_debt,
+                "annual_income": annual_income,
+                "debt_to_income_ratio": debt_to_income
+                },
+
+            "status": status,
+            "status_update_time": datetime.now(timezone.utc).isoformat()
+        }
+    }
+
+    application_collection.update_one(
+        {"appNumber": app_number},
+        {"$set": update_fields}
+    )
+
+    # add a note detailing why the phase is incomplete
+    if status == "Incomplete":
+        note = {
+            "message": f"Phase 2 incomplete: Missing {', '.join(missing_fields)}",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        application_collection.update_one(
+            {"appNumber": app_number},
+            {"$push": {"notes": note}}
+        )
+
+    return jsonify({"message": f"Credit details for #{app_number} updated succesfully"})
+
 @app.route('/api/check_appStatus/<appNumber>', methods=['GET'])
 def check_status(appNumber):
     appNumber = int(appNumber)
-    for app in applications:
-        if app['appNumber'] == appNumber:
-            return jsonify({'status': app['appStatus'],
-                            'appName': app['appName']})
-    
-    return jsonify({'message': 'Application Not Found'})
+    application = application_collection.find_one({"appNumber": appNumber})
+    if application:
+        application["_id"] = str(application["_id"])
+        return jsonify(application)
+    else:
+        return jsonify({'message': 'Application Not Found'})
 
 @app.route('/api/change_appStatus/<appNumber>', methods=['POST'])
 def change_status(appNumber):

@@ -71,6 +71,98 @@ function displayApplications() {
     });
 }
 
+function phaseOne() {
+    const formData = new FormData(document.getElementById('phase1Form'));
+    const appNumberName = document.getElementById('appProcess').value;
+    let parts = appNumberName.split(" ");
+    const appNumber = parts[0];
+    const personalDetails = {
+        appNumber: appNumber,
+        age: formData.get('age'),
+        employmentStatus: formData.get('employmentStatus'),
+        maritalStatus: formData.get('maritalStatus')
+    };
+
+
+    // Send to backend
+    fetch('api/update_personal_details', {
+        method:'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(personalDetails)
+    })
+
+    .then(response => {
+        if(!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message);
+            })
+        }
+
+        return response.json();
+    })
+
+    .then(data => {
+        console.log(data.message)
+        
+        const phaseOneResponse = document.getElementById('phase1Response');
+        phaseOneResponse.innerHTML = ''; // Clear existing application list
+        const appElement = document.createElement('div');
+        appElement.innerHTML = `
+            ${data.message}
+        `;
+
+        phaseOneResponse.appendChild(appElement);
+        document.getElementById('phase1Form').reset();
+    })
+}
+
+
+function phaseTwo() {
+    const formData = new FormData(document.getElementById('phase2Form'));
+    const appNumberName = document.getElementById('appProcess').value;
+    let parts = appNumberName.split(" ");
+    const appNumber = parts[0];
+
+    const creditCheck = {
+        appNumber: appNumber,
+        creditScore: formData.get('creditScore'),
+        currentDebt: formData.get('currentDebt'),
+        annualIncome: formData.get('income')
+    };
+    console.log(creditCheck);
+
+     // Send to backend
+     fetch('api/credit_check', {
+        method:'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(creditCheck)
+    })
+
+    .then(response => {
+        if(!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message);
+            })
+        }
+
+        return response.json();
+    })
+
+    .then(data => {
+        console.log(data.message)
+        
+        const phaseTwoResponse = document.getElementById('phase2Response');
+        phaseTwoResponse.innerHTML = ''; // Clear existing application list
+        const appElement = document.createElement('div');
+        appElement.innerHTML = `
+            ${data.message}
+        `;
+
+        phaseTwoResponse.appendChild(appElement);
+        document.getElementById('phase2Form').reset();
+    })
+
+}
 // Funciton to check the status of an application
 function checkStatus(){
     const appNumber = document.getElementById('appNumberCheck').value.trim();
@@ -81,10 +173,16 @@ function checkStatus(){
     .then(response => response.json())
     .then(data => {
         const statusElement = document.getElementById('applicationStatus');
-        if (data.status){
-            statusElement.innerHTML = `Application Status of ${appNumber} (${data.appName}): ${data.status}`;
+        if (data.appStatus){
+            statusElement.innerHTML = `
+            <strong>Application #${appNumber} -- ${data.appName}</strong><br>
+            Status: ${data.appStatus}<br>
+            Phase 1: ${data.processing_phase_one?.status || 'Not Started'}<br>
+            Phase 2: ${data.processing_phase_two?.status || 'Not Started'}<br>
+        
+            `;
         } else {
-            statusElement.innerHTML = 'Application Status: Not Found';
+            statusElement.innerHTML = data.message;
         }
     })
     .catch(error => {
@@ -124,7 +222,12 @@ function showAllApplications() {
             const appList = document.getElementById('displayApps');
             appList.innerHTML = ''; // Clear existing application list
             console.log(data);
-            appList.textContent = JSON.stringify(data); // Display the list as a string
+            data.forEach(app => {
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(app, null, 2);
+                appList.appendChild(pre);
+            })
+            //appList.textContent = JSON.stringify(data, null, 2); // Display the list as a string
         })
         .catch(error => {
             console.error('Error fetching all applications:', error);

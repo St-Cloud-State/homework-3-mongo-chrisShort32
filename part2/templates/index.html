@@ -48,7 +48,7 @@
         <input type="number" min="18" id="age" name="age" placeholder="18">
         
         <label for="employmentOptions">Employment Status:</label>
-        <select id="employmentOptions" name="employmentOptions">
+        <select id="employmentOptions" name="employmentStatus">
             <option value="">-- Select --</option>
             <option value="fullTime">Employed (Full-Time)</option>
             <option value="partTime">Employed (Part-Time)</option>
@@ -66,13 +66,16 @@
         </select>
       
         <button type="submit">Submit</button>
+        <div id="phase1Response" style="margin-top: 10px;">
+
+        </div>
       </form>
       
       <form id="phase2Form" onsubmit="event.preventDefault(); phaseTwo();">
         <h3>Phase 2: Credit Check</h3>
           
         <label for="creditScore">Credit Score:</label>
-        <select id="creditScore" name="scores">
+        <select id="creditScore" name="creditScore">
             <option value="">-- Select --</option>
             <option value="exceptional">Exceptional (800-850))</option>
             <option value="veryGood">Very Good (740-799)</option>
@@ -82,12 +85,16 @@
         </select>
 
         <label for="currentDebt">Current Debt:</label>
-        <input type="number" min="0" step="1000" id="currentDebt" placeholder="0">
+        <input type="number" min="0" step="1000" id="currentDebt" name="currentDebt" placeholder="0">
 
         <label for="income">Annual Income:</label>
-        <input type="number" min="0" step="1000" id="income" placeholder="40000">
+        <input type="number" min="0" step="1000" id="income" name="income" placeholder="40000">
       
         <button type="submit">Submit</button>
+
+        <div id="phase2Response" style="margin-top: 10px;">
+
+        </div>
       </form>
       
       
