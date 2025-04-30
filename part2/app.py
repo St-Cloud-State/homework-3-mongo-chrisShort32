@@ -185,8 +185,40 @@ def change_status():
 @app.route('/api/change_phase_status', methods=['POST'])
 def change_phase_status():
     application = request.get_json()
-    appNumber = application.get('appNumber')
-    status = application.get('status') 
+    appNumber = int(application.get('appNumber'))
+    status = application.get('status')
+    note = application.get('notes')
+    print(appNumber, status)
+    application_collection.update_one(
+        {"appNumber": appNumber}, 
+        {"$set": {
+            "processing_phase_three": {
+                "certification_check": {
+                    "status": status,
+                    "status_update_time": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        }})
+    
+    if note:
+        if note.get('noteOne') and not note.get('noteTwo'):
+            msg = note['noteOne']
+        elif note.get('noteTwo') and not note.get('noteOne'):
+            msg = note['noteTwo']
+        else:
+            msg = f"{note.get('noteOne', '')}, {note.get('noteTwo', '')}".strip(', ')
+
+        new_note = {
+            "message": f"Phase 3 Incomplete: {msg}",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        application_collection.update_one(
+            {"appNumber": appNumber}, 
+            {"$push": {"notes": new_note}}
+        )
+
+    return jsonify({"message": "Phase 3 status has been updated"})
 
 @app.route('/api/get_cert_check', methods=['GET'])
 def get_doc():
