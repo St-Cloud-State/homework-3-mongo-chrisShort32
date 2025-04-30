@@ -167,20 +167,27 @@ def check_status(appNumber):
     else:
         return jsonify({'message': 'Application Not Found'})
 
-@app.route('/api/change_appStatus/<appNumber>', methods=['POST'])
-def change_status(appNumber):
-    data = request.get_json()
-    new_status = data.get('appStatus')
+@app.route('/api/change_appStatus', methods=['POST'])
+def change_status():
+    application = request.get_json()
+    appNumber = application.get('appNumber')
+    status = application.get('status')
+    note = application.get('note')
+    if note == "":
+        note = "Accepted"
 
-    for app in applications:
-        if int(app['appNumber']) == int(appNumber):
-            app['appStatus'] = new_status;
-            return jsonify({'appNumber': app['appNumber'],
-                            'appName': app['appName'],
-                            'appStatus': app['appStatus']})
-    
-    return jsonify({'message': 'Application not found'})
- 
+    new_note = {"message": note, "timestamp": datetime.now(timezone.utc).isoformat()}
+    application_collection.update_one({"appNumber": appNumber}, {"$set": {"appStatus": status}})
+    application_collection.update_one({"appNumber": appNumber}, {"$push": {"notes": new_note}})   
+
+    return jsonify({'message': 'Application status has been updated'})
+
+@app.route('/api/change_phase_status', methods=['POST'])
+def change_phase_status():
+    application = request.get_json()
+    appNumber = application.get('appNumber')
+    status = application.get('status') 
+
 @app.route('/api/get_cert_check', methods=['GET'])
 def get_doc():
     app_id = request.args.get('appId')

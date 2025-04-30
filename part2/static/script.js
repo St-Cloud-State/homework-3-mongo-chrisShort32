@@ -114,7 +114,6 @@ function phaseOne() {
         phaseOneResponse.appendChild(appElement);
         document.getElementById('phase1Form').reset();
     })
-    certCheck();
 }
 
 
@@ -193,7 +192,7 @@ function checkStatus(){
 
 // Function to change the status of the application
 function changeAppStatus(){
-    const appNumber = document.getElementById('appNumberChange').value.trim();
+    const appNumber = document.getElementById('appNumberChange').value;
     const appStatus = document.getElementById('statusOptions').value;
     fetch(`api/change_appStatus/${appNumber}`,{
         method: 'POST',
@@ -254,29 +253,81 @@ function processOptions() {
 }
 
 function evaluateApplication(applicantData) {
-    let result = "Approved";
-    let reasonForRejection = "N/A";
+    let status = "Approved";
+    let reasonForRejection = "";
 
     if (applicantData.processing_phase_two.credit_check.debt_to_income_ratio > 38) {
-        result = "Rejected";
-        reasonForRejection = `Debt to income ratio is to high. {${applicantData.processing_phase_two.credit_check.debt_to_income_ratio}}`;
+        status = "Rejected";
+        reasonForRejection = `Rejected: Debt to income ratio is to high. {${applicantData.processing_phase_two.credit_check.debt_to_income_ratio}}`;
     } else if (applicantData.processing_phase_one.personal_details.credit_score === 'poor') {
-        result= "Rejected";
-        reasonForRejection = "Credit score too low. {Poor (300 - 579)}";
+        status = "Rejected";
+        reasonForRejection = "Rejected: Credit score too low. {Poor (300 - 579)}";
     }
 
     const eval = {
-        result,
-        'reason': reasonForRejection,
+        'appNumber': applicantData.appNumber,
+        'status': status,
+        'note': reasonForRejection,
     };
 
-    return (eval)
+    fetch('/api/change_appStatus', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(eval)
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.message);
+        });   
     
+}
+
+function determineLoanTerms(applicantData) {
+    // loan amounts = what ever makes the debt to income ratio 40%
+    // .4(income) - debt = loan factor
+    const loanAmount = 0.4 * (applicantData.processing_phase_two.credit_check.annual_income) - (applicantData.processing_phase_two.credit_check.current_debt);
+
+    // Base interest is 5%
+    let baseInterest = 0.05;
+
+    if (applicantData.processing_phase_one.personal_details.marital_status === 'married') {
+        baseInterest -= 0.005;
+    } else {
+        baseInterest += 0.005;
+    }
+    if (applicantData.processing_phase_one.personal_details.employment_status === 'fullTime') {
+        baseInterest -= 0.005;
+    } else {
+        baseInterest += 0.005;
+    }
+    if (applicantData.processing_phase_one.personal_details.age > 30) {
+        baseInterest -= 0.005;
+    } else {
+        baseInterest += 0.005;
+    }
+    const creditScore = applicantData.processing_phase_two.credit_check.credit_score;
+    if (creditScore == 'exceptional') {
+        baseInterest -= 0.01;
+    } else if (creditScore == 'veryGood') {
+        baseInterest -= 0.005;
+    } else if (creditScore == 'good') {
+        baseInterest += 0.005;
+    } else {
+        baseInterest += 0.01;
+    }
+
+    const loanTerms = {
+        'amount': loanAmount,
+        'interestRate': baseInterest,
+    };
+    return (loanTerms)
+
 }
 
 function createButtons(applicantData) {
     const confirm = document.getElementById('confirm');
-    confirmButton = document.createElement('button');
+    
+    const confirmButton = document.createElement('button');
     confirmButton.textContent = "OK";
     confirmButton.style.margin = '10px';
     confirmButton.style.border = '1px solid #333';  
@@ -290,10 +341,12 @@ function createButtons(applicantData) {
             <br>The application has been certified!
             <br>Please check status for more information.<br><br>`;
         document.getElementById('certCheck').innerHTML = '';
+        
         console.log(evaluateApplication(applicantData));
+        
     }
 
-    cancelButton = document.createElement('button');
+    const cancelButton = document.createElement('button');
     cancelButton.textContent = "Cancel";
     cancelButton.style.margin = '10px';
     cancelButton.style.border = '1px solid #333';  
