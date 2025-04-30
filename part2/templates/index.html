@@ -70,6 +70,7 @@
 
         </div>
       </form>
+      <hr style="border-top: dashed 1px; border-bottom: dashed 1px; background-color: transparent; border-color: #bd1212;">
       
       <form id="phase2Form" onsubmit="event.preventDefault(); phaseTwo();">
         <h3>Phase 2: Credit Check</h3>
@@ -96,11 +97,16 @@
 
         </div>
       </form>
+      <hr style="border-top: dashed 1px; border-bottom: dashed 1px; background-color: transparent; border-color: #bd1212;">
       
       
-        <h3> Phase 3: Certification Check
+        <h3>Phase 3: Certification Check</h3>
+            <button onclick="certCheck()">Certification Check</button>
             <div id="certCheck">
                 <!--certification results here-->
+            </div>
+            <div id="confirm" style="flex-direction: row;">
+                <!--ok cancel buttons will appear here-->
             </div>
     </div>
     <hr>

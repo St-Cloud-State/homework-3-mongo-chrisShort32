@@ -181,6 +181,18 @@ def change_status(appNumber):
     
     return jsonify({'message': 'Application not found'})
  
+@app.route('/api/get_cert_check', methods=['GET'])
+def get_doc():
+    app_id = request.args.get('appId')
+    app_id = int(app_id)
+    application = application_collection.find_one({"appNumber": app_id})
+    if application:
+        application["_id"] = str(application["_id"])
+        return jsonify(application)
+    else:
+        return jsonify({'message': 'Application Not Found'})
+   
+
 # Route to render the index.html page
 @app.route('/')
 def index():

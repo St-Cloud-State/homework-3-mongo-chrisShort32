@@ -114,6 +114,7 @@ function phaseOne() {
         phaseOneResponse.appendChild(appElement);
         document.getElementById('phase1Form').reset();
     })
+    certCheck();
 }
 
 
@@ -161,7 +162,7 @@ function phaseTwo() {
         phaseTwoResponse.appendChild(appElement);
         document.getElementById('phase2Form').reset();
     })
-
+ 
 }
 // Funciton to check the status of an application
 function checkStatus(){
@@ -250,4 +251,130 @@ function processOptions() {
         })
         .catch(error => console.error("Error fetching applications", error));
         
+}
+
+function evaluateApplication(applicantData) {
+    let result = "Approved";
+    let reasonForRejection = "N/A";
+
+    if (applicantData.processing_phase_two.credit_check.debt_to_income_ratio > 38) {
+        result = "Rejected";
+        reasonForRejection = `Debt to income ratio is to high. {${applicantData.processing_phase_two.credit_check.debt_to_income_ratio}}`;
+    } else if (applicantData.processing_phase_one.personal_details.credit_score === 'poor') {
+        result= "Rejected";
+        reasonForRejection = "Credit score too low. {Poor (300 - 579)}";
+    }
+
+    const eval = {
+        result,
+        'reason': reasonForRejection,
+    };
+
+    return (eval)
+    
+}
+
+function createButtons(applicantData) {
+    const confirm = document.getElementById('confirm');
+    confirmButton = document.createElement('button');
+    confirmButton.textContent = "OK";
+    confirmButton.style.margin = '10px';
+    confirmButton.style.border = '1px solid #333';  
+    confirmButton.style.backgroundColor = '#f0f0f0'; 
+    confirmButton.style.color = '#000';            
+    confirmButton.style.borderRadius = '5px';        
+    confirm.appendChild(confirmButton);
+    confirmButton.onclick = () => {
+        alert("shits been confirmed");
+        document.getElementById('confirm').innerHTML = `
+            <br>The application has been certified!
+            <br>Please check status for more information.<br><br>`;
+        document.getElementById('certCheck').innerHTML = '';
+        console.log(evaluateApplication(applicantData));
+    }
+
+    cancelButton = document.createElement('button');
+    cancelButton.textContent = "Cancel";
+    cancelButton.style.margin = '10px';
+    cancelButton.style.border = '1px solid #333';  
+    cancelButton.style.backgroundColor = '#f0f0f0'; 
+    cancelButton.style.color = '#000';            
+    cancelButton.style.borderRadius = '5px'; 
+    confirm.appendChild(cancelButton);
+    cancelButton.onclick = () => {
+        alert("shits been canceled");
+        document.getElementById('confirm').innerHTML = '';
+        document.getElementById('certCheck').innerHTML = '';
+
+    }
+
+}
+function certCheck() {
+    appId = document.getElementById('appProcess').value.split(" ")[0];
+
+    fetch(`/api/check_appStatus/${appId}`, {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        const statusElement = document.getElementById('certCheck');
+        if (data.appStatus){
+            let str = "";
+            let certified = false;
+            let notes_one = "";
+            let notes_two = "";
+            let message = "";
+            if (data.processing_phase_one?.status === 'Complete' && data.processing_phase_two?.status === 'Complete') {
+                certified = true;
+            }
+            if (certified) {
+                notes_one = `<br><br><strong>Personal Details:</strong><br>
+                    Age: ${data.processing_phase_one.personal_details.age}<br>
+                    Marital Status: ${data.processing_phase_one.personal_details.marital_status}<br>
+                    EmploymentStatus: ${data.processing_phase_one.personal_details.employment_status}<br>`;
+
+                notes_two = `<br><br><strong>Credit Check:</strong><br>
+                    Credit Score: ${data.processing_phase_two.credit_check.credit_score}<br>
+                    Current Debt: ${data.processing_phase_two.credit_check.current_debt}<br>
+                    Annual Income: ${data.processing_phase_two.credit_check.annual_income}<br>
+                    Debt to Income Ratio: ${data.processing_phase_two.credit_check.debt_to_income_ratio}%<br>
+                    `;
+
+                message = "If the above information is correct, click the OK button.<br>If the above information is not correct, click cancel, then re-enter the correct information in the relative phase.";
+                str = `Phase 3: Certified<br><br>${message}`;
+
+               let result = createButtons(data);
+
+            } else if (data.notes) {
+                notes_one = "<br>Notes: ";
+                notes_two = "<br>Notes: ";
+                data.notes?.forEach(note => {
+                    if (note.message.split(" ")[1] === "1") {
+                        notes_one += "{" + note.message + "}, ";
+                    } else {
+                        notes_two+= "{" + note.message + "}, ";
+                    }
+                });
+                message = "Certification could not be completed.<br>Please check the notes, and update the relevant phase fields."
+                str = `Phase 3: Incomplete<br><br>${message}`;
+            } else {
+                message = "Certification could not be completed.<br>Please complete Phase 1 and Phase 2 then try again.";
+                str = `Phase 3: Not Started<br><br>${message}`;
+            }
+
+            statusElement.innerHTML = `
+            <strong>Application #${appId} -- ${data.appName}</strong><br><br>
+            Status: ${data.appStatus}<br><br>
+            Phase 1: ${data.processing_phase_one?.status || 'Not Started'} ${notes_one}<br><br>
+            Phase 2: ${data.processing_phase_two?.status || 'Not Started'} ${notes_two}<br><br>
+            ${str}<br><br>
+        
+            `;
+        } else {
+            statusElement.innerHTML = data.message;
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching application status:', error);
+    })
 }
