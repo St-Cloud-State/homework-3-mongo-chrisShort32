@@ -173,9 +173,7 @@ def change_status():
     appNumber = application.get('appNumber')
     status = application.get('status')
     note = application.get('note')
-    if note == "":
-        note = "Accepted"
-
+    print(note)
     new_note = {"message": note, "timestamp": datetime.now(timezone.utc).isoformat()}
     application_collection.update_one({"appNumber": appNumber}, {"$set": {"appStatus": status}})
     application_collection.update_one({"appNumber": appNumber}, {"$push": {"notes": new_note}})   

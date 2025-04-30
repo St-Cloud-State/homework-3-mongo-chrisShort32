@@ -237,6 +237,8 @@ function showAllApplications() {
 document.getElementById('appProcess').onchange = () => {
     document.getElementById('confirm').innerHTML = '';
     document.getElementById('certCheck').innerHTML = '';
+    document.getElementById('acceptOrReject').innerHTML='';
+    document.getElementById('applicationStatus').innerHTML='';
 };
 
 processOptions.call(document.getElementById('appProcess'));
@@ -258,20 +260,24 @@ function processOptions() {
 
 function evaluateApplication(applicantData) {
     let status = "Accepted";
-    let reasonForRejection = "";
+    let result = "";
 
     if (applicantData.processing_phase_two.credit_check.debt_to_income_ratio > 38) {
         status = "Rejected";
-        reasonForRejection = `Rejected: Debt to income ratio is to high. {${applicantData.processing_phase_two.credit_check.debt_to_income_ratio}%}`;
-    } else if (applicantData.processing_phase_one.personal_details.credit_score === 'poor') {
+        result = `Rejected: Debt to income ratio is to high. {${applicantData.processing_phase_two.credit_check.debt_to_income_ratio}%}`;
+    } else if (applicantData.processing_phase_two.credit_check.credit_score === 'poor') {
         status = "Rejected";
-        reasonForRejection = "Rejected: Credit score too low. {Poor (300 - 579)}";
+        result = "Rejected: Credit score too low. {Poor (300 - 579)}";
     }
 
+    if (status === 'Accepted') {
+        const loanTerms = determineLoanTerms(applicantData);
+        result = `Loan Terms: Amount: ${loanTerms.amount}, Interest Rate: ${loanTerms.interestRate}`;
+    }
     const eval = {
         'appNumber': applicantData.appNumber,
         'status': status,
-        'note': reasonForRejection,
+        'note': result,
     };
 
     fetch('/api/change_appStatus', {
@@ -312,6 +318,7 @@ function determineLoanTerms(applicantData) {
         baseInterest += 0.005;
     }
     const creditScore = applicantData.processing_phase_two.credit_check.credit_score;
+    console.log(creditScore);
     if (creditScore == 'exceptional') {
         baseInterest -= 0.01;
     } else if (creditScore == 'veryGood') {
