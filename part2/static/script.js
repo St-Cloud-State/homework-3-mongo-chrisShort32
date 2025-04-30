@@ -575,3 +575,33 @@ function certCheck() {
         console.error('Error fetching application status:', error);
     })
 }
+
+function getNotes() {
+    const appNumber = document.getElementById('appNotes').value.trim();
+
+    if (!appNumber) {
+        alert("Please enter an application number.");
+        return;
+    }
+
+    fetch(`/api/get_notes?appNumber=${appNumber}`)
+        .then(response => response.json())
+        .then(data => {
+            const noteList = document.getElementById('notes');
+            noteList.innerHTML = '';
+
+            if (data.notes && data.notes.length > 0) {
+                data.notes.forEach(note => {
+                    const noteElement = document.createElement('div');
+                    noteElement.textContent = `${note?.message || 'No message'} -- ${note?.timestamp || 'No timestamp'}`;
+                    noteList.appendChild(noteElement);
+                });
+            } else {
+                noteList.textContent = data.message || "No notes found.";
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching notes:", error);
+            document.getElementById('note').textContent = "Failed to load notes.";
+        });
+}

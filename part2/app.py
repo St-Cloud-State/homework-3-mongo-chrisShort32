@@ -229,6 +229,21 @@ def get_doc():
     else:
         return jsonify({'message': 'Application Not Found'})
    
+@app.route('/api/get_notes', methods=['GET'])
+def get_notes():
+    app_number = int(request.args.get('appNumber'))
+
+    # Check if the application exists
+    application = application_collection.find_one({"appNumber": app_number}, {"notes": 1, "_id": 0})
+    if not application:
+        return jsonify({"message": "Application Not Found"})
+
+    notes = application.get("notes", [])
+    if notes:
+        return jsonify({"message": "Notes have been gathered", "notes": notes})
+    else:
+        return jsonify({"message": "No notes found for this application", "notes": []})
+
 
 # Route to render the index.html page
 @app.route('/')
