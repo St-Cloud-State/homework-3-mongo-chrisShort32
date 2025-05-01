@@ -443,7 +443,7 @@ function certCheck() {
                 const cancelButton = createCancelButton();
                 
                 confirmButton.onclick = () => {
-                    alert("shits been confirmed");
+                    alert("Phase details have been confirmed");
                     
                     const result = evaluateApplication(data);
                     document.getElementById('confirm').innerHTML = `
@@ -454,7 +454,7 @@ function certCheck() {
                 }
   
                 cancelButton.onclick = () => {
-                    alert("shits been canceled");
+                    alert("Certification has been canceled");
                     document.getElementById('confirm').innerHTML = '';
                     document.getElementById('certCheck').innerHTML = '';
                     certified = false;
